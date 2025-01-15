@@ -1,0 +1,97 @@
+﻿@page "/transactions"
+@using finance.Models
+@using finance.Services
+@inject TransactionService TransactionService
+@inject TagService TagService
+@using MudBlazor
+
+@* !-- Sidebar --> *@
+<MudLayout>
+    <MudDrawer Open="true" Elevation="1" Style="background-color: #2E3B4E; color: #FFFFFF;">
+        <MudNavMenu>
+            <MudText Class="pa-2" Typo="Typo.subtitle1" Style="color: #90CAF9;">Navigation</MudText>
+            <MudNavLink Href="/transactions" Icon="@Icons.Material.Filled.ListAlt" Match="NavLinkMatch.All" Style="color: #FFFFFF;">
+                Transactions
+            </MudNavLink>
+            <MudNavLink Href="/debts" Icon="@Icons.Material.Filled.AttachMoney" Match="NavLinkMatch.All" Style="color: #FFFFFF;">
+                Debts
+            </MudNavLink>
+            <MudNavLink Href="/tags" Icon="@Icons.Material.Filled.Label" Match="NavLinkMatch.All" Style="color: #FFFFFF;">
+                Tags
+            </MudNavLink>
+        </MudNavMenu>
+    </MudDrawer> 
+    <!-- Main Content -->
+    <MudMainContent Class="pa-4" Style="background-color: #F5F5F5;">
+        <MudContainer MaxWidth="MaxWidth.Medium">
+            <MudPaper Class="pa-4" Elevation="2" Style="background-color: #FFFFFF;">
+    <div class="container mt-5">
+    <div class="d-flex justify-content-between mb-3">
+        <a href="/home" class="btn btn-secondary">Back</a>
+        <h3>Transaction List</h3>
+        <a href="/addtransaction" class="btn btn-primary">Add Transaction</a>
+    </div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Amount</th>
+                <th>Transaction Type</th>
+                <th>Tag</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (transactions.Count == 0)
+            {
+                <tr>
+                    <td colspan="6" class="text-center">No transactions available.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var transaction in transactions)
+                {
+                    <tr>
+                        <td>@transaction.Title</td>
+                        <td>@transaction.Amount</td>
+                        <td>@transaction.TransactionType</td>
+                        <td>@GetTagName(transaction.TagId)</td>
+                        <td>@transaction.Date.ToShortDateString()</td>
+                        <td>
+                            <a href="/edittransaction/@transaction.Id" class="btn btn-primary btn-sm">Edit</a>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteTransaction(transaction.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+			</MudPaper>
+		</MudContainer>
+	</MudMainContent>
+    </MudLayout>
+
+@code {
+    private List<Transaction> transactions = new();
+    private List<Tag> tags = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        transactions = await TransactionService.GetTransactionsAsync();
+        tags = await TagService.GetTagsAsync();
+    }
+
+    private string GetTagName(int? tagId)
+    {
+        return tags.FirstOrDefault(t => t.Id == tagId)?.TagName ?? "No Tag";
+    }
+
+    private async Task DeleteTransaction(int id)
+    {
+        transactions.RemoveAll(t => t.Id == id);
+        await TransactionService.SaveTransactionsAsync(transactions);
+    }
+}

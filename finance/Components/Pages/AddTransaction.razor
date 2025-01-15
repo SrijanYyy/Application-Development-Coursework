@@ -1,0 +1,73 @@
+﻿@page "/addtransaction"
+@using finance.Models
+@using finance.Services
+@inject TransactionService TransactionService
+@inject TagService TagService
+@inject NavigationManager Navigation
+
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <a href="/transactions" class="btn btn-secondary">Back</a>
+            <h3 class="text-center flex-grow-1">Add New Transaction</h3>
+        </div>
+        <div class="card-body">
+            <form>
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" id="title" class="form-control" @bind="newTransaction.Title" placeholder="Enter transaction title" required>
+                </div>
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount</label>
+                    <input type="number" id="amount" class="form-control" @bind="newTransaction.Amount" placeholder="Enter amount" required>
+                </div>
+                <div class="mb-3">
+                    <label for="transactionType" class="form-label">Transaction Type</label>
+                    <select id="transactionType" class="form-select" @bind="newTransaction.TransactionType" required>
+                        <option value="Debit">Debit</option>
+                        <option value="Credit">Credit</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="tag" class="form-label">Tag</label>
+                    <select id="tag" class="form-select" @bind="newTransaction.TagId">
+                        <option value="">-- Select Tag --</option>
+                        @foreach (var tag in tags)
+                        {
+                            <option value="@tag.Id">@tag.TagName</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" id="date" class="form-control" @bind="newTransaction.Date" required>
+                </div>
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea id="notes" class="form-control" @bind="newTransaction.Notes" rows="3" placeholder="Add any additional notes"></textarea>
+                </div>
+                <div class="d-grid">
+                    <button type="button" class="btn btn-primary" @onclick="SaveTransaction">Add Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+@code {
+    private Transaction newTransaction = new();
+    private List<Tag> tags = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        tags = await TagService.GetTagsAsync();
+    }
+
+    private async Task SaveTransaction()
+    {
+        await TransactionService.AddTransactionAsync(newTransaction);
+        Navigation.NavigateTo("/transactions");
+    }
+}

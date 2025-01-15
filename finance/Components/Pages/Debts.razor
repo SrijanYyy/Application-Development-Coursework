@@ -1,0 +1,100 @@
+﻿@page "/debts"
+@using finance.Models
+@using finance.Services
+@inject DebtService DebtService
+@inject TagService TagService
+@inject NavigationManager Navigation
+@using MudBlazor
+
+@* !-- Sidebar --> *@
+<MudLayout>
+    <MudDrawer Open="true" Elevation="1" Style="background-color: #2E3B4E; color: #FFFFFF;">
+        <MudNavMenu>
+            <MudText Class="pa-2" Typo="Typo.subtitle1" Style="color: #90CAF9;">Navigation</MudText>
+            <MudNavLink Href="/transactions" Icon="@Icons.Material.Filled.ListAlt" Match="NavLinkMatch.All" Style="color: #FFFFFF;">
+                Transactions
+            </MudNavLink>
+            <MudNavLink Href="/debts" Icon="@Icons.Material.Filled.AttachMoney" Match="NavLinkMatch.All" Style="color: #FFFFFF;">
+                Debts
+            </MudNavLink>
+            <MudNavLink Href="/tags" Icon="@Icons.Material.Filled.Label" Match="NavLinkMatch.All" Style="color: #FFFFFF;">
+                Tags
+            </MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+    
+    <!-- Main Content -->
+    <MudMainContent Class="pa-4" Style="background-color: #F5F5F5;">
+        <MudContainer MaxWidth="MaxWidth.Medium">
+            <MudPaper Class="pa-4" Elevation="2" Style="background-color: #FFFFFF;">
+<div class="container mt-5">
+    <div class="d-flex justify-content-between mb-3">
+		<a href="/home" class="btn btn-secondary">Back</a>
+        <h3>Debt List</h3>
+        <a href="/adddebt" class="btn btn-primary">Add Debt</a>
+    </div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Amount</th>
+                <th>Debt Source</th>
+                <th>Due Date</th>
+                <th>Tag</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (debts.Count == 0)
+            {
+                <tr>
+                    <td colspan="6" class="text-center">No debts available.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var debt in debts)
+                {
+                    <tr>
+                        <td>@debt.Title</td>
+                        <td>@debt.Amount</td>
+                        <td>@debt.DebtSource</td>
+                        <td>@debt.DueDate.ToShortDateString()</td>
+                        <td>@GetTagName(debt.TagId)</td>
+                        <td>
+                            <a href="/editdebt/@debt.Id" class="btn btn-primary btn-sm">Edit</a>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteDebt(debt.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+ </MudPaper>
+ </MudContainer>
+ </MudMainContent>
+</MudLayout>
+
+
+@code {
+    private List<Debt> debts = new();
+    private List<Tag> tags = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        debts = await DebtService.GetDebtsAsync();
+        tags = await TagService.GetTagsAsync();
+    }
+
+    private string GetTagName(int? tagId)
+    {
+        return tags.FirstOrDefault(t => t.Id == tagId)?.TagName ?? "No Tag";
+    }
+
+    private async Task DeleteDebt(int id)
+    {
+        debts.RemoveAll(d => d.Id == id);
+        await DebtService.SaveDebtsAsync(debts);
+    }
+}

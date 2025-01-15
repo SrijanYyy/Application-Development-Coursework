@@ -1,0 +1,109 @@
+﻿@page "/home"
+@using MudBlazor
+@using finance.Models
+@using finance.Services
+@inject TransactionService TransactionService
+@inject DebtService DebtService
+@inject NavigationManager Navigation
+
+<MudLayout>
+    <!-- Top Bar -->
+    <MudAppBar Color="Color.Primary" Elevation="4" Style="background-color: #1976D2;">
+        <MudText Typo="Typo.h6" Class="ml-2" Style="color: #FFFFFF;">Finance Tracker Pro</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@Logout" Class="mr-2">
+            Logout
+        </MudButton>
+    </MudAppBar>
+
+    <!-- Sidebar -->
+    <MudDrawer Open="true" Elevation="1" Style="background-color: #2E3B4E; color: #FFFFFF;">
+        <MudNavMenu>
+            <MudText Class="pa-2" Typo="Typo.subtitle1" Style="color: #90CAF9;">Navigation</MudText>
+            <MudNavLink Href="/transactions" Icon="@Icons.Material.Filled.ListAlt" Match="NavLinkMatch.All" Style="color: #FFFFFF;">
+                Transactions
+            </MudNavLink>
+            <MudNavLink Href="/debts" Icon="@Icons.Material.Filled.AttachMoney" Match="NavLinkMatch.All" Style="color: #FFFFFF;">
+                Debts
+            </MudNavLink>
+            <MudNavLink Href="/tags" Icon="@Icons.Material.Filled.Label" Match="NavLinkMatch.All" Style="color: #FFFFFF;">
+                Tags
+            </MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+
+    <!-- Main Content -->
+    <MudMainContent Class="pa-4" Style="background-color: #F5F5F5;">
+        <MudContainer MaxWidth="MaxWidth.Medium">
+            <MudPaper Class="pa-4" Elevation="2" Style="background-color: #FFFFFF;">
+                <MudText Typo="Typo.h5" Style="color: #1976D2;">Welcome to Finance Tracker Pro</MudText>
+                <MudText Typo="Typo.body1" Class="mt-2">
+                    Manage your transactions, debts, and tags effectively using this application.
+                </MudText>
+            </MudPaper>
+
+            <!-- Summary Cards -->
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
+                        <MudText Typo="Typo.h6" Style="color: #1976D2;">Total Balance</MudText>
+                        <MudText Typo="Typo.body1" Class="mt-1">₹ @TotalBalance</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
+                        <MudText Typo="Typo.h6" Style="color: #1976D2;">Total Cash Inflows</MudText>
+                        <MudText Typo="Typo.body1" Class="mt-1">₹ @TotalInflows</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
+                        <MudText Typo="Typo.h6" Style="color: #1976D2;">Total Cash Outflows</MudText>
+                        <MudText Typo="Typo.body1" Class="mt-1">₹ @TotalOutflows</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
+                        <MudText Typo="Typo.h6" Style="color: #1976D2;">Total Debts</MudText>
+                        <MudText Typo="Typo.body1" Class="mt-1">₹ @TotalDebts</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private decimal TotalInflows { get; set; }
+    private decimal TotalOutflows { get; set; }
+    private decimal TotalDebts { get; set; }
+    private decimal TotalBalance { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var transactions = await TransactionService.GetTransactionsAsync();
+        var debts = await DebtService.GetDebtsAsync();
+
+        CalculateSummary(transactions, debts);
+    }
+
+    private void CalculateSummary(List<Transaction> transactions, List<Debt> debts)
+    {
+        TotalInflows = transactions
+            .Where(t => t.TransactionType == "Credit")
+            .Sum(t => t.Amount);
+
+        TotalOutflows = transactions
+            .Where(t => t.TransactionType == "Debit")
+            .Sum(t => t.Amount);
+
+        TotalDebts = debts.Sum(d => d.Amount);
+
+        TotalBalance = TotalInflows - TotalOutflows;
+    }
+
+    private void Logout()
+    {
+        Navigation.NavigateTo("/");
+    }
+}
