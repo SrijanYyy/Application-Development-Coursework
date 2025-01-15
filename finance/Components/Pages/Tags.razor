@@ -4,9 +4,6 @@
 @inject TagService TagService
 @using MudBlazor
 
-
-
-@* !-- Sidebar --> *@
 <MudLayout>
     <MudDrawer Open="true" Elevation="1" Style="background-color: #2E3B4E; color: #FFFFFF;">
         <MudNavMenu>
@@ -21,64 +18,90 @@
                 Tags
             </MudNavLink>
         </MudNavMenu>
-    </MudDrawer> 
+    </MudDrawer>
     <!-- Main Content -->
     <MudMainContent Class="pa-4" Style="background-color: #F5F5F5;">
         <MudContainer MaxWidth="MaxWidth.Medium">
             <MudPaper Class="pa-4" Elevation="2" Style="background-color: #FFFFFF;">
-<div class="container mt-5">
-    <div class="d-flex justify-content-between mb-3">
-            <a href="/home" class="btn btn-secondary">Back</a>
-
-        <h3>Tag List</h3>
-        <a href="/addtags" class="btn btn-primary">Add Tag</a>
-    </div>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Tag Name</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (tags.Count == 0)
-            {
-                <tr>
-                    <td colspan="2" class="text-center">No tags available.</td>
-                </tr>
-            }
-            else
-            {
-                @foreach (var tag in tags)
-                {
-                    <tr>
-                        <td>@tag.TagName</td>
-                        <td>
-                            <a href="/edittag/@tag.Id" class="btn btn-primary btn-sm">Edit</a>
-                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteTag(tag.Id)">Delete</button>
-                        </td>
-                    </tr>
-                }
-            }
-        </tbody>
-    </table>
-</div>
-      </MudPaper>
+                <div class="container mt-5">
+                    <div class="d-flex justify-content-between mb-3">
+                        <a href="/home" class="btn btn-secondary">Back</a>
+                        <h3>Tag List</h3>
+                        <a href="/addtags" class="btn btn-primary">Add Tag</a>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-lg-3 col-md-6 mb-2">
+                            <input type="text" placeholder="Search..." class="form-control" @bind="searchQuery" />
+                        </div>
+                    </div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Tag Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (filteredTags.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="2" class="text-center">No tags available.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var tag in filteredTags)
+                                {
+                                    <tr>
+                                        <td>@tag.TagName</td>
+                                        <td>
+                                            <a href="/edittag/@tag.Id" class="btn btn-primary btn-sm">Edit</a>
+                                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteTag(tag.Id)">Delete</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </MudPaper>
         </MudContainer>
     </MudMainContent>
 </MudLayout>
 
 @code {
     private List<Tag> tags = new();
+    private List<Tag> filteredTags = new();
+
+    private string searchQuery
+    {
+        get => _searchQuery;
+        set
+        {
+            _searchQuery = value;
+            ApplyFilters();
+        }
+    }
+
+    private string _searchQuery = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         tags = await TagService.GetTagsAsync();
+        filteredTags = tags;
     }
 
     private async Task DeleteTag(int id)
     {
         tags.RemoveAll(t => t.Id == id);
         await TagService.SaveTagsAsync(tags);
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredTags = tags
+            .Where(t => string.IsNullOrEmpty(searchQuery) || t.TagName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 }

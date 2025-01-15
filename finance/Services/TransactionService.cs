@@ -15,7 +15,7 @@ namespace finance.Services
             var json = await File.ReadAllTextAsync(FilePath);
             return JsonSerializer.Deserialize<List<Transaction>>(json) ?? new List<Transaction>();
         }
-
+        
         public async Task SaveTransactionsAsync(List<Transaction> transactions)
         {
             var json = JsonSerializer.Serialize(transactions, new JsonSerializerOptions { WriteIndented = true });

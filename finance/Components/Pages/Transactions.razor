@@ -5,7 +5,6 @@
 @inject TagService TagService
 @using MudBlazor
 
-@* !-- Sidebar --> *@
 <MudLayout>
     <MudDrawer Open="true" Elevation="1" Style="background-color: #2E3B4E; color: #FFFFFF;">
         <MudNavMenu>
@@ -20,68 +19,150 @@
                 Tags
             </MudNavLink>
         </MudNavMenu>
-    </MudDrawer> 
-    <!-- Main Content -->
+    </MudDrawer>
     <MudMainContent Class="pa-4" Style="background-color: #F5F5F5;">
         <MudContainer MaxWidth="MaxWidth.Medium">
             <MudPaper Class="pa-4" Elevation="2" Style="background-color: #FFFFFF;">
-    <div class="container mt-5">
-    <div class="d-flex justify-content-between mb-3">
-        <a href="/home" class="btn btn-secondary">Back</a>
-        <h3>Transaction List</h3>
-        <a href="/addtransaction" class="btn btn-primary">Add Transaction</a>
-    </div>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Amount</th>
-                <th>Transaction Type</th>
-                <th>Tag</th>
-                <th>Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (transactions.Count == 0)
-            {
-                <tr>
-                    <td colspan="6" class="text-center">No transactions available.</td>
-                </tr>
-            }
-            else
-            {
-                @foreach (var transaction in transactions)
-                {
-                    <tr>
-                        <td>@transaction.Title</td>
-                        <td>@transaction.Amount</td>
-                        <td>@transaction.TransactionType</td>
-                        <td>@GetTagName(transaction.TagId)</td>
-                        <td>@transaction.Date.ToShortDateString()</td>
-                        <td>
-                            <a href="/edittransaction/@transaction.Id" class="btn btn-primary btn-sm">Edit</a>
-                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteTransaction(transaction.Id)">Delete</button>
-                        </td>
-                    </tr>
-                }
-            }
-        </tbody>
-    </table>
-</div>
-			</MudPaper>
-		</MudContainer>
-	</MudMainContent>
-    </MudLayout>
+                <div class="container mt-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <a href="/home" class="btn btn-secondary">Back</a>
+                        <h3 class="mb-0">Transaction List</h3>
+                        <a href="/addtransaction" class="btn btn-primary">Add Transaction</a>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-lg-3 col-md-6 mb-2">
+                            <input type="text" placeholder="Search..." class="form-control" @bind="searchQuery" />
+                        </div>
+                        <div class="col-lg-2 col-md-6 mb-2">
+                            <select class="form-select" @bind="selectedType">
+                                <option value="">All Types</option>
+                                <option value="Debit">Debit</option>
+                                <option value="Credit">Credit</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-6 mb-2">
+                            <select class="form-select" @bind="selectedTagId">
+                                <option value="">All Tags</option>
+                                @foreach (var tag in tags)
+                                {
+                                    <option value="@tag.Id">@tag.TagName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-6 mb-2">
+                            <input type="date" class="form-control" @bind="startDate" />
+                        </div>
+                        <div class="col-lg-2 col-md-6 mb-2">
+                            <input type="date" class="form-control" @bind="endDate" />
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Amount</th>
+                                <th>Transaction Type</th>
+                                <th>Tag</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (filteredTransactions.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center">No transactions available.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var transaction in filteredTransactions)
+                                {
+                                    <tr>
+                                        <td>@transaction.Title</td>
+                                        <td>@transaction.Amount</td>
+                                        <td>@transaction.TransactionType</td>
+                                        <td>@GetTagName(transaction.TagId)</td>
+                                        <td>@transaction.Date.ToShortDateString()</td>
+                                        <td>
+                                            <a href="/edittransaction/@transaction.Id" class="btn btn-primary btn-sm">Edit</a>
+                                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteTransaction(transaction.Id)">Delete</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </MudPaper>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
 
 @code {
     private List<Transaction> transactions = new();
+    private List<Transaction> filteredTransactions = new();
     private List<Tag> tags = new();
+
+    private string searchQuery
+    {
+        get => _searchQuery;
+        set
+        {
+            _searchQuery = value;
+            ApplyFilters();
+        }
+    }
+    private string selectedType
+    {
+        get => _selectedType;
+        set
+        {
+            _selectedType = value;
+            ApplyFilters();
+        }
+    }
+    private int? selectedTagId
+    {
+        get => _selectedTagId;
+        set
+        {
+            _selectedTagId = value;
+            ApplyFilters();
+        }
+    }
+    private DateTime? startDate
+    {
+        get => _startDate;
+        set
+        {
+            _startDate = value;
+            ApplyFilters();
+        }
+    }
+    private DateTime? endDate
+    {
+        get => _endDate;
+        set
+        {
+            _endDate = value;
+            ApplyFilters();
+        }
+    }
+
+    private string _searchQuery = string.Empty;
+    private string _selectedType = string.Empty;
+    private int? _selectedTagId = null;
+    private DateTime? _startDate = null;
+    private DateTime? _endDate = null;
 
     protected override async Task OnInitializedAsync()
     {
         transactions = await TransactionService.GetTransactionsAsync();
         tags = await TagService.GetTagsAsync();
+        filteredTransactions = transactions;
     }
 
     private string GetTagName(int? tagId)
@@ -93,5 +174,16 @@
     {
         transactions.RemoveAll(t => t.Id == id);
         await TransactionService.SaveTransactionsAsync(transactions);
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredTransactions = transactions
+            .Where(t => string.IsNullOrEmpty(searchQuery) || t.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+            .Where(t => string.IsNullOrEmpty(selectedType) || t.TransactionType == selectedType)
+            .Where(t => !selectedTagId.HasValue || t.TagId == selectedTagId)
+            .Where(t => (!startDate.HasValue || t.Date >= startDate) && (!endDate.HasValue || t.Date <= endDate))
+            .ToList();
     }
 }

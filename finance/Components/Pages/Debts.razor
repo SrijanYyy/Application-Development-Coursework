@@ -6,7 +6,6 @@
 @inject NavigationManager Navigation
 @using MudBlazor
 
-@* !-- Sidebar --> *@
 <MudLayout>
     <MudDrawer Open="true" Elevation="1" Style="background-color: #2E3B4E; color: #FFFFFF;">
         <MudNavMenu>
@@ -22,71 +21,151 @@
             </MudNavLink>
         </MudNavMenu>
     </MudDrawer>
-    
-    <!-- Main Content -->
     <MudMainContent Class="pa-4" Style="background-color: #F5F5F5;">
         <MudContainer MaxWidth="MaxWidth.Medium">
             <MudPaper Class="pa-4" Elevation="2" Style="background-color: #FFFFFF;">
-<div class="container mt-5">
-    <div class="d-flex justify-content-between mb-3">
-		<a href="/home" class="btn btn-secondary">Back</a>
-        <h3>Debt List</h3>
-        <a href="/adddebt" class="btn btn-primary">Add Debt</a>
-    </div>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Amount</th>
-                <th>Debt Source</th>
-                <th>Due Date</th>
-                <th>Tag</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (debts.Count == 0)
-            {
-                <tr>
-                    <td colspan="6" class="text-center">No debts available.</td>
-                </tr>
-            }
-            else
-            {
-                @foreach (var debt in debts)
-                {
-                    <tr>
-                        <td>@debt.Title</td>
-                        <td>@debt.Amount</td>
-                        <td>@debt.DebtSource</td>
-                        <td>@debt.DueDate.ToShortDateString()</td>
-                        <td>@GetTagName(debt.TagId)</td>
-                        <td>@debt.Status</td>
-                        <td>
-                            <a href="/editdebt/@debt.Id" class="btn btn-primary btn-sm">Edit</a>
-                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteDebt(debt.Id)">Delete</button>
-                        </td>
-                    </tr>
-                }
-            }
-        </tbody>
-    </table>
-</div>
- </MudPaper>
- </MudContainer>
- </MudMainContent>
-</MudLayout>
+                <div class="container mt-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <a href="/home" class="btn btn-secondary">Back</a>
+                        <h3 class="mb-0">Debt List</h3>
+                        <a href="/adddebt" class="btn btn-primary">Add Debt</a>
+                    </div>
 
+                    <div class="row mb-4">
+                        <div class="col-lg-3 col-md-6 mb-2">
+                            <input type="text" placeholder="Search..." class="form-control" @bind="searchQuery" />
+                        </div>
+                        <div class="col-lg-2 col-md-6 mb-2">
+                            <select class="form-select" @bind="selectedStatus">
+                                <option value="">All Status</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Paid">Paid</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-6 mb-2">
+                            <select class="form-select" @bind="selectedTagId">
+                                <option value="">All Tags</option>
+                                @foreach (var tag in tags)
+                                {
+                                    <option value="@tag.Id">@tag.TagName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-6 mb-2">
+                            <input type="date" class="form-control" @bind="startDate" />
+                        </div>
+                        <div class="col-lg-2 col-md-6 mb-2">
+                            <input type="date" class="form-control" @bind="endDate" />
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Amount</th>
+                                <th>Debt Source</th>
+                                <th>Due Date</th>
+                                <th>Tag</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (filteredDebts.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center">No debts available.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var debt in filteredDebts)
+                                {
+                                    <tr>
+                                        <td>@debt.Title</td>
+                                        <td>@debt.Amount</td>
+                                        <td>@debt.DebtSource</td>
+                                        <td>@debt.DueDate.ToShortDateString()</td>
+                                        <td>@GetTagName(debt.TagId)</td>
+                                        <td>@debt.Status</td>
+                                        <td>
+                                            <a href="/editdebt/@debt.Id" class="btn btn-primary btn-sm">Edit</a>
+                                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteDebt(debt.Id)">Delete</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </MudPaper>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
 
 @code {
     private List<Debt> debts = new();
+    private List<Debt> filteredDebts = new();
     private List<Tag> tags = new();
+
+    private string searchQuery
+    {
+        get => _searchQuery;
+        set
+        {
+            _searchQuery = value;
+            ApplyFilters();
+        }
+    }
+    private string selectedStatus
+    {
+        get => _selectedStatus;
+        set
+        {
+            _selectedStatus = value;
+            ApplyFilters();
+        }
+    }
+    private int? selectedTagId
+    {
+        get => _selectedTagId;
+        set
+        {
+            _selectedTagId = value;
+            ApplyFilters();
+        }
+    }
+    private DateTime? startDate
+    {
+        get => _startDate;
+        set
+        {
+            _startDate = value;
+            ApplyFilters();
+        }
+    }
+    private DateTime? endDate
+    {
+        get => _endDate;
+        set
+        {
+            _endDate = value;
+            ApplyFilters();
+        }
+    }
+
+    private string _searchQuery = string.Empty;
+    private string _selectedStatus = string.Empty;
+    private int? _selectedTagId = null;
+    private DateTime? _startDate = null;
+    private DateTime? _endDate = null;
 
     protected override async Task OnInitializedAsync()
     {
         debts = await DebtService.GetDebtsAsync();
         tags = await TagService.GetTagsAsync();
+        filteredDebts = debts;
     }
 
     private string GetTagName(int? tagId)
@@ -98,5 +177,16 @@
     {
         debts.RemoveAll(d => d.Id == id);
         await DebtService.SaveDebtsAsync(debts);
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredDebts = debts
+            .Where(d => string.IsNullOrEmpty(searchQuery) || d.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+            .Where(d => string.IsNullOrEmpty(selectedStatus) || d.Status == selectedStatus)
+            .Where(d => !selectedTagId.HasValue || d.TagId == selectedTagId)
+            .Where(d => (!startDate.HasValue || d.DueDate >= startDate) && (!endDate.HasValue || d.DueDate <= endDate))
+            .ToList();
     }
 }
