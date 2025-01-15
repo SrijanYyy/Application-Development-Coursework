@@ -13,7 +13,7 @@
         <MudSpacer />
         <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@Logout" Class="mr-2">
             Logout
-        </MudButton>
+        </MudButton>s
     </MudAppBar>
 
     <!-- Sidebar -->
@@ -44,28 +44,49 @@
 
             <!-- Summary Cards -->
             <MudGrid Class="mt-4">
-                <MudItem xs="12" sm="3">
+                <MudItem xs="12" sm="4">
                     <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
                         <MudText Typo="Typo.h6" Style="color: #1976D2;">Total Balance</MudText>
                         <MudText Typo="Typo.body1" Class="mt-1">₹ @TotalBalance</MudText>
                     </MudPaper>
                 </MudItem>
-                <MudItem xs="12" sm="3">
+                <MudItem xs="12" sm="4">
                     <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
                         <MudText Typo="Typo.h6" Style="color: #1976D2;">Total Cash Inflows</MudText>
                         <MudText Typo="Typo.body1" Class="mt-1">₹ @TotalInflows</MudText>
                     </MudPaper>
                 </MudItem>
-                <MudItem xs="12" sm="3">
+                <MudItem xs="12" sm="4">
                     <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
                         <MudText Typo="Typo.h6" Style="color: #1976D2;">Total Cash Outflows</MudText>
                         <MudText Typo="Typo.body1" Class="mt-1">₹ @TotalOutflows</MudText>
                     </MudPaper>
                 </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mt-4">
                 <MudItem xs="12" sm="3">
                     <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
                         <MudText Typo="Typo.h6" Style="color: #1976D2;">Total Debts</MudText>
                         <MudText Typo="Typo.body1" Class="mt-1">₹ @TotalDebts</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
+                        <MudText Typo="Typo.h6" Style="color: #1976D2;">Pending Debts</MudText>
+                        <MudText Typo="Typo.body1" Class="mt-1">₹ @PendingDebts</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
+                        <MudText Typo="Typo.h6" Style="color: #1976D2;">Cleared Debts</MudText>
+                        <MudText Typo="Typo.body1" Class="mt-1">₹ @ClearedDebts</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-3" Elevation="2" Style="background-color: #FFFFFF;">
+                        <MudText Typo="Typo.h6" Style="color: #1976D2;">Remaining Debts</MudText>
+                        <MudText Typo="Typo.body1" Class="mt-1">₹ @RemainingDebts</MudText>
                     </MudPaper>
                 </MudItem>
             </MudGrid>
@@ -76,8 +97,11 @@
 @code {
     private decimal TotalInflows { get; set; }
     private decimal TotalOutflows { get; set; }
-    private decimal TotalDebts { get; set; }
     private decimal TotalBalance { get; set; }
+    private decimal TotalDebts { get; set; }
+    private decimal PendingDebts { get; set; }
+    private decimal ClearedDebts { get; set; }
+    private decimal RemainingDebts { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -97,9 +121,19 @@
             .Where(t => t.TransactionType == "Debit")
             .Sum(t => t.Amount);
 
+        TotalBalance = TotalInflows - TotalOutflows;
+
         TotalDebts = debts.Sum(d => d.Amount);
 
-        TotalBalance = TotalInflows - TotalOutflows;
+        PendingDebts = debts
+            .Where(d => d.Status == "Pending")
+            .Sum(d => d.Amount);
+
+        ClearedDebts = debts
+            .Where(d => d.Status == "Cleared")
+            .Sum(d => d.Amount);
+
+        RemainingDebts = PendingDebts - ClearedDebts;
     }
 
     private void Logout()

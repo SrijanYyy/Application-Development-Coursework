@@ -53,6 +53,7 @@ namespace finance.Services
                 existingDebt.DebtSource = updatedDebt.DebtSource;
                 existingDebt.DueDate = updatedDebt.DueDate;
                 existingDebt.TagId = updatedDebt.TagId;
+                existingDebt.Status = updatedDebt.Status;
                 existingDebt.Notes = updatedDebt.Notes;
 
                 await SaveDebtsAsync(debts);

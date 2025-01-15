@@ -41,6 +41,7 @@
                 <th>Debt Source</th>
                 <th>Due Date</th>
                 <th>Tag</th>
+                <th>Status</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -61,6 +62,7 @@
                         <td>@debt.DebtSource</td>
                         <td>@debt.DueDate.ToShortDateString()</td>
                         <td>@GetTagName(debt.TagId)</td>
+                        <td>@debt.Status</td>
                         <td>
                             <a href="/editdebt/@debt.Id" class="btn btn-primary btn-sm">Edit</a>
                             <button class="btn btn-danger btn-sm" @onclick="() => DeleteDebt(debt.Id)">Delete</button>

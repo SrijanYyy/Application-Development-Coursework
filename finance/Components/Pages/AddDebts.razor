@@ -40,6 +40,13 @@
                     </select>
                 </div>
                 <div class="mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select id="status" class="form-select" @bind="newDebt.Status">
+                        <option value="Pending">Pending</option>
+                        <option value="Cleared">Cleared</option>
+                    </select>
+                </div>
+                <div class="mb-3">
                     <label for="notes" class="form-label">Notes</label>
                     <textarea id="notes" class="form-control" @bind="newDebt.Notes" rows="3" placeholder="Add any additional notes"></textarea>
                 </div>
